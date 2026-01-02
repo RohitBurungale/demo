@@ -1,0 +1,156 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dynamic Quiz App</title>
+
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+
+    <!-- Tone.js -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/tone/14.7.77/Tone.min.js"></script>
+
+    <!-- Inter Font -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+
+    <!-- Custom CSS -->
+    <link rel="stylesheet" href="style.css">
+</head>
+
+<body class="bg-gray-900 text-white min-h-screen p-4">
+    <!-- Leaderboard Toggle Button -->
+    <button id="leaderboard-toggle" class="fixed right-4 top-4 z-30 bg-blue-600 p-3 rounded-lg shadow-lg hover:bg-blue-700 transition-all duration-300 flex items-center gap-2">
+        <span class="text-xl">🏆</span>
+        <span class="hidden lg:inline text-sm font-semibold">Leaderboard</span>
+    </button>
+
+    <!-- Leaderboard Side Panel -->
+    <div id="leaderboard-panel" class="fixed right-0 top-0 bottom-0 w-80 bg-gray-800/95 p-6 shadow-2xl overflow-hidden transform translate-x-full transition-transform duration-300 ease-in-out z-20">
+        <div class="flex justify-between items-center mb-6">
+            <h2 class="text-2xl font-bold text-blue-400">Live Leaderboard</h2>
+            <button id="close-leaderboard" class="text-gray-400 hover:text-white transition-colors">
+                ✕
+            </button>
+        </div>
+        <div id="live-leaderboard" class="space-y-3 overflow-y-auto max-h-[calc(100vh-8rem)]">
+            <!-- Leaderboard entries will be populated here -->
+        </div>
+    </div>
+
+    <!-- Overlay for mobile -->
+    <div id="leaderboard-overlay" class="fixed inset-0 bg-black/50 z-10 hidden backdrop-blur-sm"></div>
+    
+    <div class="flex items-center justify-center min-h-screen">
+        <div class="bg-gray-800 p-6 sm:p-8 rounded-2xl shadow-2xl w-full max-w-md lg:mr-96">
+
+        <!-- Welcome Screen -->
+        <div id="welcome-screen">
+            <h1 class="text-3xl font-bold text-center mb-4">Web Dev Quiz</h1>
+            <p class="text-gray-400 text-center mb-6">Test your knowledge. Enter your initials to play!</p>
+
+            <input type="text" id="name-input" placeholder="Your Initials (e.g., JD)" maxlength="3"
+                class="w-full p-3 rounded-lg bg-gray-700 text-white placeholder-gray-500 text-center text-lg uppercase focus:outline-none focus:ring-2 focus:ring-blue-500 mb-4">
+            
+            <button id="start-btn"
+                class="w-full bg-blue-600 hover:bg-blue-700 text-white p-4 rounded-lg font-bold text-lg transition-transform transform hover:scale-105">
+                Start Quiz
+            </button>
+
+            <!-- Leaderboard -->
+            <h2 class="text-xl font-bold text-center mt-8 mb-4">Leaderboard</h2>
+            <div id="leaderboard-welcome" class="space-y-2"></div>
+        </div>
+
+        <!-- Quiz Screen -->
+        <div id="quiz-screen" class="hidden">
+            <div class="flex items-center justify-between mb-6">
+
+                <!-- Progress Bar -->
+                <div class="w-full bg-gray-700 rounded-full h-2.5 mr-4">
+                    <div id="progress-bar" class="bg-blue-600 h-2.5 rounded-full transition-all duration-500"
+                        style="width: 0%"></div>
+                </div>
+
+                <!-- Streak -->
+                <div id="streak-counter" class="text-lg font-bold text-yellow-400 mr-4 whitespace-nowrap">
+                    🔥 0
+                </div>
+
+                <!-- Timer -->
+                <div class="relative w-12 h-12">
+                    <svg class="timer-svg w-full h-full" viewBox="0 0 100 100">
+                        <circle class="text-gray-700" stroke-width="8" stroke="currentColor" fill="transparent" r="45"
+                            cx="50" cy="50" />
+                        <circle id="timer-circle" class="text-blue-500 timer-circle" stroke-width="8"
+                            stroke-dasharray="283" stroke-dashoffset="0" stroke-linecap="round" stroke="currentColor"
+                            fill="transparent" r="45" cx="50" cy="50" />
+                    </svg>
+                    <span id="timer-text"
+                        class="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 text-lg font-bold">
+                        15
+                    </span>
+                </div>
+            </div>
+
+            <!-- Question Area -->
+            <div id="question-container" class="transition-all duration-300">
+                <h2 class="text-lg font-semibold text-gray-400 mb-2">
+                    Question <span id="question-num">1</span> / <span id="total-questions-1">10</span>
+                </h2>
+
+                <p id="question-text" class="text-xl font-bold mb-6 min-h-[84px]"></p>
+
+                <div id="options-container" class="space-y-3"></div>
+            </div>
+        </div>
+
+        <!-- End Screen -->
+        <div id="end-screen" class="hidden">
+            <h1 class="text-3xl font-bold text-center mb-4">Quiz Complete!</h1>
+            <div class="bg-gray-700 p-6 rounded-lg text-center mb-6">
+                <div class="flex justify-around items-center">
+                    <div>
+                        <p class="text-gray-400 text-lg">Your Score</p>
+                        <p id="final-score" class="text-5xl font-bold my-2">0 / 10</p>
+                    </div>
+                    <div>
+                        <p class="text-gray-400 text-lg">Max Streak</p>
+                        <p id="max-streak" class="text-5xl font-bold my-2 text-yellow-400">🔥 0</p>
+                    </div>
+                </div>
+                <p id="score-percentage" class="text-2xl font-semibold text-blue-400 mt-4"></p>
+            </div>
+
+            <h2 class="text-xl font-bold text-center mb-4">Final Leaderboard</h2>
+            <div id="leaderboard-end" class="space-y-2 mb-8"></div>
+
+            <div class="flex gap-4">
+                <button id="play-again-btn"
+                    class="w-1/2 bg-blue-600 hover:bg-blue-700 text-white p-4 rounded-lg font-bold text-lg transition-transform transform hover:scale-105">
+                    Play Again
+                </button>
+                <button id="review-btn"
+                    class="w-1/2 bg-gray-600 hover:bg-gray-700 text-white p-4 rounded-lg font-bold text-lg transition-transform transform hover:scale-105">
+                    Review Answers
+                </button>
+            </div>
+        </div>
+
+        <!-- Review Screen -->
+        <div id="review-screen" class="hidden">
+            <h1 class="text-3xl font-bold text-center mb-6">Review Answers</h1>
+            <div id="review-questions-container" class="space-y-6 max-h-80 overflow-y-auto pr-2"></div>
+
+            <button id="back-to-score-btn"
+                class="mt-8 w-full bg-blue-600 hover:bg-blue-700 text-white p-4 rounded-lg font-bold text-lg transition-transform transform hover:scale-105">
+                Back to Score
+            </button>
+        </div>
+    </div>
+
+    <!-- External JS -->
+    <script src="app.js"></script>
+
+</body>
+</html>
